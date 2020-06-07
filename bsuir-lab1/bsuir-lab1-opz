@@ -1,0 +1,129 @@
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <cstring>
+
+using namespace std;
+
+struct Polska
+{
+	double inf;
+	Polska* next;
+};
+
+double rasAv(char*, double*);
+Polska* AddStack(Polska*, double);
+Polska* ReadStack(Polska*, double&);
+
+int prior(char);
+void AddPostFix(char*, char*);
+double masz[150];
+char str1[100], str2[100];
+
+int main()
+{
+	cout << "Input formula " << endl;
+	cin >> str1;
+
+	for (unsigned int i = 0; i < strlen(str1); i++)
+	{
+		if (str1[i] >= 'A' && !masz[str1[i]]) {
+			cout << "Input " << str1[i] << ":"; cin >> masz[str1[i]];
+		}
+	}
+	AddPostFix(str1, str2);
+	cout << endl << str2;
+	double s = rasAv(str2, masz);
+	cout << endl << "Res = " << s << endl;
+	return 0;
+}
+
+Polska* AddStack(Polska* b, double inf)
+{
+	Polska* t = new Polska;
+	t->inf = inf;
+	t->next = b;
+	return t;
+}
+
+Polska* ReadStack(Polska* b, double& inf)
+{
+	Polska* t = b;
+	inf = b->inf;
+	b = b->next;
+	delete t;
+	return b;
+}
+
+int prior(char str)
+{
+	switch (str)
+	{
+	case '(':case ')': return 0;
+	case '+':case '-': return 1;
+	case '*':case '/': return 2;
+	}
+}
+
+double rasAv(char* str1, double* mz)
+{
+	Polska* b = NULL;
+	char stroka;
+	double inf, inf1, inf2;
+
+	for (unsigned int i = 0; i < strlen(str1); i++)
+	{
+		stroka = str1[i];
+		if (stroka >= 'A') { b = AddStack(b, mz[int(stroka)]); continue; }
+		b = ReadStack(b, inf2);
+		b = ReadStack(b, inf1);
+
+		switch (stroka)
+		{
+		case '+':b = AddStack(b, inf1 + inf2); break;
+		case '-':b = AddStack(b, inf1 - inf2); break;
+		case '*':b = AddStack(b, inf1 * inf2); break;
+		case '/':b = AddStack(b, inf1 / inf2); break;
+		}
+	}
+	b = ReadStack(b, inf);
+	return inf;
+}
+
+void AddPostFix(char* strin, char* strout)
+{
+	Polska* b = NULL;
+	int n = 0;
+	char str;
+	double inf;
+
+	for (unsigned int i = 0; i < strlen(strin); i++)
+	{
+		str = strin[i];
+		if (str >= 'A') { strout[n++] = str; continue; }
+		if (b == NULL || str == '(') { b = AddStack(b, str); continue; }
+		if (str == ')')
+		{
+			while (b->inf != '(')
+			{
+				b = ReadStack(b, inf);
+				strout[n++] = (char)inf;
+			}
+			b = ReadStack(b, inf);
+			continue;
+		}
+		int pr = prior(str);
+		while (b != NULL && prior((char)b->inf) >= pr)
+		{
+			b = ReadStack(b, inf);
+			strout[n++] = (char)inf;
+		}
+		b = AddStack(b, str);
+	}
+	while (b != NULL)
+	{
+		b = ReadStack(b, inf);
+		strout[n++] = char(inf);
+	}
+	strout[n++] = '\0';
+}
